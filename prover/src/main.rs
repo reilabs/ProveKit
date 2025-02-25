@@ -20,7 +20,7 @@ use whir::{
         iopattern::WhirIOPattern,
         parameters::WhirConfig, prover::Prover,
         verifier::Verifier, 
-        Statement,
+        statement::Statement,
     },
     
 };
