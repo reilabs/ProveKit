@@ -107,11 +107,18 @@ func main() {
 				Required: false,
 				Value:    "../noir-examples/poseidon-rounds/r1cs.json",
 			},
+			&cli.StringFlag{
+				Name:     "ccs",
+				Usage:    "Optional path to store the constraint system object",
+				Required: false,
+				Value:    "",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			proofFilePath := c.String("proof")
 			configFilePath := c.String("config")
 			r1csFilePath := c.String("r1cs")
+			outputCcsPath := c.String("ccs")
 
 			proofFile, err := os.Open(proofFilePath)
 			if err != nil {
@@ -164,7 +171,7 @@ func main() {
 				return fmt.Errorf("failed to deserialize interner: %w", err)
 			}
 
-			verify_circuit(proof, config, r1cs, interner)
+			verify_circuit(proof, config, r1cs, interner, outputCcsPath)
 			return nil
 		},
 	}
