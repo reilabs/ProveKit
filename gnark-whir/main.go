@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/consensys/gnark/backend/groth16"
 	"github.com/urfave/cli/v2"
 
 	gnark_nimue "github.com/reilabs/gnark-nimue"
@@ -113,12 +114,28 @@ func main() {
 				Required: false,
 				Value:    "",
 			},
+			&cli.StringFlag{
+				Name: "pk",
+				Usage: "Optional path to load Proving Key from (if not provided, " +
+					"PK and VK will be generated unsafely)",
+				Required: false,
+				Value:    "",
+			},
+			&cli.StringFlag{
+				Name: "vk",
+				Usage: "Optional path to load Verifying Key from (if not provided, " +
+					"PK and VK will be generated unsafely)",
+				Required: false,
+				Value:    "",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			proofFilePath := c.String("proof")
 			configFilePath := c.String("config")
 			r1csFilePath := c.String("r1cs")
 			outputCcsPath := c.String("ccs")
+			pkPath := c.String("pk")
+			vkPath := c.String("vk")
 
 			proofFile, err := os.Open(proofFilePath)
 			if err != nil {
@@ -171,7 +188,19 @@ func main() {
 				return fmt.Errorf("failed to deserialize interner: %w", err)
 			}
 
-			verify_circuit(proof, config, r1cs, interner, outputCcsPath)
+			var pk *groth16.ProvingKey
+			var vk *groth16.VerifyingKey
+			if pkPath != "" && vkPath != "" {
+				log.Printf("Loading PK/VK from %s, %s", pkPath, vkPath)
+				restoredPk, restoredVk, err := keys_from_files(pkPath, vkPath)
+				if err != nil {
+					return err
+				}
+				pk = &restoredPk
+				vk = &restoredVk
+			}
+
+			verify_circuit(proof, config, r1cs, interner, pk, vk, outputCcsPath)
 			return nil
 		},
 	}

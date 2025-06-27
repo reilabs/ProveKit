@@ -119,12 +119,20 @@ func (circuit *Circuit) Define(api frontend.API) error {
 		api.Mul(evaluationOfVPoly, utilities.MultivarPoly(finalCoefficients, finalSumcheckRandomness, api)),
 	)
 
-	x := api.Mul(api.Sub(api.Mul(circuit.LinearStatementEvaluations[0], circuit.LinearStatementEvaluations[1]), circuit.LinearStatementEvaluations[2]), calculateEQ(api, sp_rand, t_rand))
+	x := api.Mul(
+		api.Sub(
+			api.Mul(circuit.LinearStatementEvaluations[0], circuit.LinearStatementEvaluations[1]),
+			circuit.LinearStatementEvaluations[2],
+		), calculateEQ(api, sp_rand, t_rand),
+	)
 	api.AssertIsEqual(savedValForSumcheck, x)
 	return nil
 }
 
-func verify_circuit(proof_arg ProofObject, cfg Config, internedR1CS R1CS, interner Interner, outputCcsPath string) {
+func verify_circuit(
+	proof_arg ProofObject, cfg Config, internedR1CS R1CS, interner Interner,
+	pk *groth16.ProvingKey, vk *groth16.VerifyingKey, outputCcsPath string,
+) {
 	proofs := proof_arg.MerklePaths
 	var totalAuthPath = make([][][][]uints.U8, len(proofs))
 	var totalLeaves = make([][][]frontend.Variable, len(proofs))
@@ -336,9 +344,15 @@ func verify_circuit(proof_arg ProofObject, cfg Config, internedR1CS R1CS, intern
 		}
 		log.Printf("ccs written to %s", outputCcsPath)
 	}
-	pk, vk, err := groth16.Setup(ccs)
-	if err != nil {
-		log.Fatalf("Failed to setup groth16: %v", err)
+
+	if pk == nil || vk == nil {
+		log.Printf("PK/VK not provided, generating new keys unsafely. Consider providing keys from an MPC ceremony.")
+		unsafePk, unsafeVk, err := groth16.Setup(ccs)
+		if err != nil {
+			log.Fatalf("Failed to setup groth16: %v", err)
+		}
+		pk = &unsafePk
+		vk = &unsafeVk
 	}
 
 	assignment := Circuit{
@@ -376,8 +390,8 @@ func verify_circuit(proof_arg ProofObject, cfg Config, internedR1CS R1CS, intern
 
 	witness, _ := frontend.NewWitness(&assignment, ecc.BN254.ScalarField())
 	publicWitness, _ := witness.Public()
-	proof, _ := groth16.Prove(ccs, pk, witness, backend.WithSolverOptions(solver.WithHints(utilities.IndexOf)))
-	err = groth16.Verify(proof, vk, publicWitness)
+	proof, _ := groth16.Prove(ccs, *pk, witness, backend.WithSolverOptions(solver.WithHints(utilities.IndexOf)))
+	err = groth16.Verify(proof, *vk, publicWitness)
 	if err != nil {
 		fmt.Println(err)
 	}

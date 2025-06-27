@@ -1,8 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"math/big"
 	"math/bits"
+	"os"
+
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/groth16"
+
 	"reilabs/whir-verifier-circuit/typeConverters"
 	"reilabs/whir-verifier-circuit/utilities"
 
@@ -478,4 +484,33 @@ type MatrixCell struct {
 	row    int
 	column int
 	value  *big.Int
+}
+
+func keys_from_files(pkPath string, vkPath string) (groth16.ProvingKey, groth16.VerifyingKey, error) {
+	pkFile, err := os.Open(pkPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open proving key file: %w", err)
+	}
+	defer pkFile.Close()
+
+	pk := groth16.NewProvingKey(ecc.BN254)
+	_, err = pk.ReadFrom(pkFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to restore proving key: %w", err)
+
+	}
+
+	vkFile, err := os.Open(vkPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open verifying key file: %w", err)
+	}
+	defer vkFile.Close()
+
+	vk := groth16.NewVerifyingKey(ecc.BN254)
+	_, err = vk.ReadFrom(vkFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to restore verifying key: %w", err)
+	}
+
+	return pk, vk, nil
 }
