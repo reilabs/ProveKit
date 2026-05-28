@@ -1,8 +1,9 @@
 //! Helper script to calculate the magic numbers to cancel out the anchors used
 //! in FMA multiplication.
 use bn254_multiplier::rne::{
-    mono::{mul, sqr},
+    mono::{mul_fr, sqr},
     simd_utils::make_initial,
+    FRParams,
 };
 
 const LO: usize = 1;
@@ -15,7 +16,7 @@ fn main() {
     }
 
     let a = [0, 0, 0, 0];
-    let res = sqr(a);
+    let res = sqr::<FRParams>(a);
     for (i, k) in res.iter().enumerate() {
         println!("res[{i}]: {:x}", k)
     }
@@ -35,7 +36,7 @@ fn main() {
     }
 
     let a = [0, 0, 0, 0];
-    let res = mul(a, a);
+    let res = mul_fr(a, a);
     for (i, k) in res.iter().enumerate() {
         println!("res[{i}]: {:x}", k)
     }

@@ -3,7 +3,7 @@
 use {
     crate::rne::{
         constants::{C1, C2, C3, MASK51},
-        U51_P,
+        RNEMulParams,
     },
     core::{
         ops::BitAnd,
@@ -169,7 +169,7 @@ pub fn smult_noinit_simd(s: Simd<u64, 2>, v: [u64; 5]) -> [Simd<i64, 2>; 6] {
 /// Constant-time conditional add of p to prepare for final bit reduction by
 /// making the result even.
 #[inline(always)]
-pub fn reduce_ct_simd(a: [Simd<i64, 2>; 5]) -> [Simd<i64, 2>; 5] {
+pub fn reduce_ct_simd<F: RNEMulParams>(a: [Simd<i64, 2>; 5]) -> [Simd<i64, 2>; 5] {
     let mut c = [Simd::splat(0); 5];
     let tmp = a[0];
 
@@ -179,7 +179,7 @@ pub fn reduce_ct_simd(a: [Simd<i64, 2>; 5]) -> [Simd<i64, 2>; 5] {
     // Select values based on the mask: if mask lane is true, add p, else add
     // zero
     let zeros = [Simd::splat(0); 5];
-    let p = U51_P.map(|x| Simd::splat(x as i64));
+    let p = F::P.map(|x| Simd::splat(x as i64));
     let b: [_; 5] = array::from_fn(|i| mask.select(p[i], zeros[i]));
 
     for i in 0..c.len() {

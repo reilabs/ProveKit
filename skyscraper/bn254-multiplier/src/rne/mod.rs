@@ -1,6 +1,6 @@
 //! # RNE - Round-to-Nearest-Even Montgomery Multiplication
 //!
-//! This module implements Montgomery multiplication over the BN254 scalar field
+//! This module implements Montgomery multiplication over the BN254 curve
 //! using floating-point arithmetic with round-to-nearest-even (RNE) rounding
 //! mode.
 //!
@@ -24,6 +24,7 @@
 
 pub mod batched;
 pub mod constants;
+pub mod fq_2;
 pub mod mono;
 pub mod simd_utils;
 

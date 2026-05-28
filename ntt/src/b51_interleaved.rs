@@ -29,7 +29,7 @@ fn b51_kernel(even: &mut [u64; 4], odd: &mut [u64; 4], omega: &[u64; 4]) {
     //
     // subtraction_reduce here reduces any value in [0,2**256) value to [0,2.3p)
     // creating our invariant
-    let f = rne::mono::mul(*odd, *omega);
+    let f = rne::mono::mul_fr(*odd, *omega);
     let l = subtraction_reduce(div_p_2b, addv(*even, f));
     let r = subtraction_reduce(
         div_p_2b,

@@ -32,20 +32,38 @@ mod mul {
     }
 
     #[divan::bench]
-    fn mono_mul_b51(bencher: Bencher) {
+    fn mono_mul_b51_fr(bencher: Bencher) {
         bencher
             //.counter(ItemsCount::new(1usize))
             .with_inputs(|| rng().random())
-            .bench_local_values(|(a, b)| rne::mono::mul(a, b));
+            .bench_local_values(|(a, b)| rne::mono::mul_fr(a, b));
     }
 
     #[divan::bench]
-    fn simd_mul_51b(bencher: Bencher) {
+    fn mono_mul_b51_fq(bencher: Bencher) {
+        bencher
+            //.counter(ItemsCount::new(1usize))
+            .with_inputs(|| rng().random())
+            .bench_local_values(|(a, b)| rne::mono::mul_fq(a, b));
+    }
+
+    #[divan::bench]
+    fn simd_mul_51b_fr(bencher: Bencher) {
         bencher
             //.counter(ItemsCount::new(2usize))
             .with_inputs(|| rng().random())
             .bench_local_values(|(a, b, c, d)| {
-                bn254_multiplier::rne::batched::simd_mul(a, b, c, d)
+                bn254_multiplier::rne::batched::simd_mul_fr(a, b, c, d)
+            });
+    }
+
+    #[divan::bench]
+    fn simd_mul_51b_fq(bencher: Bencher) {
+        bencher
+            //.counter(ItemsCount::new(2usize))
+            .with_inputs(|| rng().random())
+            .bench_local_values(|(a, b, c, d)| {
+                bn254_multiplier::rne::batched::simd_mul_fq(a, b, c, d)
             });
     }
 
@@ -131,7 +149,11 @@ mod mul {
 
 // #[divan::bench_group]
 mod sqr {
-    use {super::*, ark_ff::Field, bn254_multiplier::rne};
+    use {
+        super::*,
+        ark_ff::Field,
+        bn254_multiplier::rne::{self, FRParams},
+    };
 
     #[divan::bench]
     fn scalar_sqr(bencher: Bencher) {
@@ -146,7 +168,7 @@ mod sqr {
         bencher
             //.counter(ItemsCount::new(1usize))
             .with_inputs(|| rng().random())
-            .bench_local_values(|(a, b)| rne::simd_sqr(a, b));
+            .bench_local_values(|(a, b)| rne::simd_sqr::<FRParams>(a, b));
     }
 
     #[divan::bench]
@@ -154,7 +176,7 @@ mod sqr {
         bencher
             //.counter(ItemsCount::new(1usize))
             .with_inputs(|| rng().random())
-            .bench_local_values(|a| rne::mono::sqr(a));
+            .bench_local_values(rne::mono::sqr::<FRParams>);
     }
 
     #[divan::bench]
